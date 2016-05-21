@@ -88,5 +88,5 @@ Note: The lexical binding must be enabled to make this work
      (_ (stack-push z))
      (return x))
    '(8 9 10))
-  ;; => ((8 9 10) (9 8 200))
+  ;; => ((8 9 10) 9 8 200)
   #+END_SRC
