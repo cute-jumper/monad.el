@@ -36,6 +36,37 @@ Note: The lexical binding must be enabled to make this work
   ;; => (Just . 9)
   #+END_SRC
 
+  How can this be useful in real world scenarios? For example, in [[https://github.com/cute-jumper/org2elcomment][org2elcomment]],
+  we need to search inside an Emacs Lisp source code file to find the two lines:
+  =;;; Commentary:= and =;;; Code:=, and insert the comment between these two
+  lines. If one of the searches fails, the whole process fails. Here is how to
+  use =Maybe= monad in this scenario:
+  #+BEGIN_SRC elisp
+  (monad-do Maybe
+    (beg (Maybe<-
+          (save-excursion
+            (goto-char (point-min))
+            (re-search-forward ";;; Commentary:$" nil t))))
+    (end (Maybe<-
+          (save-excursion
+            (goto-char (point-min))
+            (re-search-forward ";;; Code:$" nil t))))
+    (return (cons beg end)))
+  #+END_SRC
+
+  The code is much simplified since we only need to consider the successful
+  path. =Maybe<-= is a simple macro to convert the return value of its last
+  argument into a =Maybe= value: =nil= to =Nothing= and anything else is =Just
+  something=:
+  #+BEGIN_SRC elisp
+  (Maybe<-
+    (+ 1 2)
+    (eq 'too 'naive)) ; => Nothing
+  (Maybe<-
+    (eq 'too 'simple)
+    (* 2 3)) ; => (Just . 6)
+  #+END_SRC
+
 * List Monad
   #+BEGIN_SRC elisp
   (monad-do List

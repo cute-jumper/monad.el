@@ -61,7 +61,7 @@
 ;; ----------- ;;
 (defun Just (x) (cons 'Just x))
 
-(defvar Nothing '(Nothing))
+(defvar Nothing 'Nothing)
 
 (defalias 'Maybe-return 'Just)
 
@@ -76,6 +76,13 @@
 (defun Maybe-join (m)
   (Maybe-bind m 'identity))
 
+(defmacro Maybe<- (&rest body)
+  `(let ((res (progn
+                ,@body)))
+     (if res
+         (Just res)
+       Nothing)))
+
 ;; ----- ;;
 ;; tests ;;
 ;; ----- ;;
@@ -89,9 +96,20 @@
   (x (save-excursion
        (return 4)))
   (y (if (= x 4)
-         (return 5)
+         Nothing
        (return -4)))
   (return (+ x y)))
+
+(monad-do Maybe
+  (beg (Maybe<-
+        (save-excursion
+          (goto-char (point-min))
+          (re-search-forward ";;; Commentary:$" nil t))))
+  (end (Maybe<-
+        (save-excursion
+          (goto-char (point-min))
+          (re-search-forward ";;; Code:$" nil t))))
+  (return (cons beg end)))
 
 (Maybe-bind (Just 2) (lambda (x) (Just (+ x 1))))
 
