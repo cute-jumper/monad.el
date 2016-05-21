@@ -30,11 +30,17 @@
   `(intern (format "%s-%s" ,type ,suffix)))
 
 (defun monad-normalize-return (sexp return-func)
-  (if (and
-       (consp sexp)
-       (eq (car sexp) 'return))
-      (setq sexp `(funcall ',return-func ,@(cdr sexp)))
-    sexp))
+  (if (eq (car sexp) 'if)
+      `(,(car sexp) ,(cadr sexp)
+        ,@(mapcar
+           (lambda (sexp)
+             (monad-normalize-return sexp return-func))
+           (cddr sexp)))
+    (if (and
+         (consp sexp)
+         (eq (car sexp) 'return))
+        (setq sexp `(funcall ',return-func ,@(cdr sexp)))
+      sexp)))
 
 (defmacro monad-do (type &rest body)
   (declare (indent 1))
@@ -82,6 +88,13 @@
   ((return 10))
   (return (+ x y)))
 
+(monad-do Maybe
+  (x (Just 4))
+  (y (if (= x 4)
+         (return 5)
+       (return -4)))
+  (return (+ x y)))
+
 (Maybe-bind '(Just 2) (lambda (x) (Just (+ x 1))))
 
 (Maybe-join (Just (Just 4)))
@@ -108,7 +121,7 @@
   (State (lambda (s) (list s s))))
 
 (defun State-put (s)
-  (State (lambda (s) (list nil s))))
+  (State (lambda (_) (list nil s))))
 
 ;; ----- ;;
 ;; tests ;;
@@ -124,7 +137,9 @@
    (x (State-get))
    (y (test-pop))
    (z (test-pop))
-   ((test-pop))
+   ((if (= (length x) 3)
+        (State-put '(200))
+      (State-put '(100))))
    ((test-push y))
    (_ (test-push z))
    (return x))
