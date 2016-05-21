@@ -107,10 +107,37 @@
 (defun List-bind (m f)
   (apply #'append (mapcar f m)))
 
+;; ----- ;;
+;; tests ;;
+;; ----- ;;
+
 (monad-do List
   (x (List 2 3 4))
   (y (List 5 6 7))
   (return (cons x y)))
+
+;; ------------ ;;
+;; Reader monad ;;
+;; ------------ ;;
+
+(defalias 'Reader-run 'funcall)
+
+(defun Reader-return (x)
+  (lambda (_) x))
+
+(defun Reader-bind (m f)
+  (lambda (x) (Reader-run (funcall f (Reader-run m x)) x)))
+
+;; ----- ;;
+;; tests ;;
+;; ----- ;;
+
+(Reader-run
+ (monad-do Reader
+   (x (apply-partially '* 2))
+   (y (apply-partially '+ 10))
+   (return (+ x y)))
+ 3)
 
 ;; ----------- ;;
 ;; State monad ;;
