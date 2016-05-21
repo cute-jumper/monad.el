@@ -139,6 +139,41 @@
    (return (+ x y)))
  3)
 
+;; ------------ ;;
+;; Writer monad ;;
+;; ------------ ;;
+
+(defun Writer (a w)
+  (cons 'Writer (cons a w)))
+
+(defalias 'Writer-run 'cdr)
+
+(defun Writer-return (x)
+  (Writer x nil))
+
+;; TODO: more monoid type
+(defun Monoid-append (x y)
+  (cond
+   ((stringp x) (concat x y))
+   ((listp x) (append x y))))
+
+(defun Writer-bind (m f)
+  (let* ((res1 (Writer-run m))
+         (res2 (Writer-run (funcall f (car res1)))))
+    (Writer (car res2) (Monoid-append (cdr res1) (cdr res2)))))
+
+;; ----- ;;
+;; tests ;;
+;; ----- ;;
+
+(defun log-number (x)
+  (Writer x (list (format "Got number: %s" x))))
+
+(monad-do Writer
+  (x (log-number 3))
+  (y (log-number 5))
+  (return (* x y)))
+
 ;; ----------- ;;
 ;; State monad ;;
 ;; ----------- ;;
