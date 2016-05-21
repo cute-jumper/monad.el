@@ -16,10 +16,9 @@ Note: The lexical binding must be enabled to make this work
 
   The body contains a list of sexps in the form of =(var monad)= except for the
   last expression. If you don't want to bind anything, use =(_ monad)= or just
-  =(monad)=. Since that since =do= notation doesn't allow you to bind any
-  variable in the last expression, so the last sexp is only =monad=, not
-  =(monad)=. =if= special form is also supported in the body, and =return= is
-  also allowed.
+  =(monad)=. Since =do= notation doesn't allow you to bind any variable in the
+  last expression, so the last expression is only =monad=, not =(monad)=. Whthin
+  the body, =if= special form is supported, and =return= is also allowed.
 
 * Maybe Monad
   #+BEGIN_SRC elisp
@@ -27,13 +26,13 @@ Note: The lexical binding must be enabled to make this work
     (x (Just 4))
     (y (if (= x 4)
            (return 5)
-         (return -4)))
+         Nothing))
     (return (+ x y)))
   ;; => (Just . 9)
   #+END_SRC
 
 * State Monad
-  The following example comes from [[http://learnyouahaskell.com/][lyah]]:
+  The following code is based on the example in [[http://learnyouahaskell.com/][lyah]]:
 
   #+BEGIN_SRC elisp
   (defun stack-pop ()
