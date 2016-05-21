@@ -30,17 +30,14 @@
   `(intern (format "%s-%s" ,type ,suffix)))
 
 (defun monad-normalize-return (sexp return-func)
-  (if (and (consp sexp) (eq (car sexp) 'if))
-      `(,(car sexp) ,(cadr sexp)
-        ,@(mapcar
-           (lambda (sexp)
-             (monad-normalize-return sexp return-func))
-           (cddr sexp)))
-    (if (and
-         (consp sexp)
-         (eq (car sexp) 'return))
-        (setq sexp `(funcall ',return-func ,@(cdr sexp)))
-      sexp)))
+  (if (consp sexp)
+      (if (eq (car sexp) 'return)
+          `(funcall ',return-func ,@(cdr sexp))
+        (mapcar
+         (lambda (s)
+           (monad-normalize-return s return-func))
+         sexp))
+    sexp))
 
 (defmacro monad-do (type &rest body)
   (declare (indent 1))
@@ -89,15 +86,21 @@
   (return (+ x y)))
 
 (monad-do Maybe
-  (x (Just 4))
+  (x (save-excursion
+       (return 4)))
   (y (if (= x 4)
          (return 5)
        (return -4)))
-  Nothing)
+  (return (+ x y)))
 
 (Maybe-bind (Just 2) (lambda (x) (Just (+ x 1))))
 
 (Maybe-join (Just (Just 4)))
+
+;; ---------- ;;
+;; List monad ;;
+;; ---------- ;;
+(defalias 'List-return 'list)
 
 ;; ----------- ;;
 ;; State monad ;;

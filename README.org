@@ -18,7 +18,7 @@ Note: The lexical binding must be enabled to make this work
   last expression. If you don't want to bind anything, use =(_ monad)= or just
   =(monad)=. Since =do= notation doesn't allow you to bind any variable in the
   last expression, so the last expression is only =monad=, not =(monad)=. Whthin
-  the body, =if= special form is supported, and =return= is also allowed.
+  the body, =return= is also allowed.
 
 * Maybe Monad
   #+BEGIN_SRC elisp
