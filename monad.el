@@ -123,27 +123,27 @@
   (apply (cdr state) args))
 
 (defun State-return (x)
-  (State (lambda (s) (list x s))))
+  (State (lambda (s) (cons x s))))
 
 (defun State-bind (m f)
   (State (lambda (s)
            (let ((pair (State-run m s)))
-             (State-run (funcall f (car pair)) (nth 1 pair))))))
+             (State-run (funcall f (car pair)) (cdr pair))))))
 
 (defun State-get ()
-  (State (lambda (s) (list s s))))
+  (State (lambda (s) (cons s s))))
 
 (defun State-put (s)
-  (State (lambda (_) (list nil s))))
+  (State (lambda (_) (cons nil s))))
 
 ;; ----- ;;
 ;; tests ;;
 ;; ----- ;;
 (defun stack-pop ()
-  (State (lambda (s) (list (car s) (cdr s)))))
+  (State #'identity))
 
 (defun stack-push (a)
-  (State (lambda (s) (list nil (cons a s)))))
+  (State (lambda (s) (cons nil (cons a s)))))
 
 (State-run
  (monad-do State
@@ -158,8 +158,8 @@
    (return x))
  '(8 9 10))
 
-(State-run (State-bind (State (lambda (s) (list 0 (+ 10 s))))
-                       (lambda (a) (State (lambda (s) (list a (* 11 s)))))) 1)
+(State-run (State-bind (State (lambda (s) (cons 0 (+ 10 s))))
+                       (lambda (a) (State (lambda (s) (cons a (* 11 s)))))) 1)
 
 (provide 'monad)
 ;;; monad.el ends here
