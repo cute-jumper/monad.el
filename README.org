@@ -10,8 +10,11 @@ Note: The lexical binding must be enabled to make this work
   : (monad-do type
   :    &rest body)
 
-  The type can be one of (The list might increase over time)
+  Currently, the type can be one of
   - =Maybe=
+  - =List=
+  - =Reader=
+  - =Writer=
   - =State=
 
   The body contains a list of sexps in the form of =(var monad)= except for the
@@ -19,6 +22,8 @@ Note: The lexical binding must be enabled to make this work
   =(monad)=. Since =do= notation doesn't allow you to bind any variable in the
   last expression, so the last expression is only =monad=, not =(monad)=. Whthin
   the body, =return= is also allowed.
+
+  Some of the following code are based on examples of [[http://learnyouahaskell.com/]].
 
 * Maybe Monad
   #+BEGIN_SRC elisp
@@ -31,9 +36,39 @@ Note: The lexical binding must be enabled to make this work
   ;; => (Just . 9)
   #+END_SRC
 
-* State Monad
-  The following code is based on the example in [[http://learnyouahaskell.com/][lyah]]:
+* List Monad
+  #+BEGIN_SRC elisp
+  (monad-do List
+    (x (List 2 3 4))
+    (y (List 5 6 7))
+    (return (cons x y)))
+  ;; => ((2 . 5) (2 . 6) (2 . 7) (3 . 5) (3 . 6) (3 . 7) (4 . 5) (4 . 6) (4 . 7))
+  #+END_SRC
 
+* Reader Monad
+  #+BEGIN_SRC elisp
+  (Reader-run
+   (monad-do Reader
+     (x (apply-partially '* 2))
+     (y (apply-partially '+ 10))
+     (return (+ x y)))
+   3)
+  ;; => 19
+  #+END_SRC
+
+* Writer Monad
+  #+BEGIN_SRC elisp
+  (defun log-number (x)
+    (Writer x (list (format "Got number: %s" x))))
+
+  (monad-do Writer
+    (x (log-number 3))
+    (y (log-number 5))
+    (return (* x y)))
+  ;; => (Writer 15 "Got number: 3" "Got number: 5")
+  #+END_SRC
+
+* State Monad
   #+BEGIN_SRC elisp
   (defun stack-pop ()
     (State (lambda (s) (list (car s) (cdr s)))))
