@@ -146,10 +146,10 @@ Note: The lexical binding must be enabled to make this work
 * State Monad
   #+BEGIN_SRC elisp
   (defun stack-pop ()
-    (State (lambda (s) (list (car s) (cdr s)))))
+    (State #'identity))
 
   (defun stack-push (a)
-    (State (lambda (s) (list nil (cons a s)))))
+    (State (lambda (s) (cons nil (cons a s)))))
 
   (State-run
    (monad-do State
