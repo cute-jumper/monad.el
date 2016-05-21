@@ -139,6 +139,12 @@
 (defun List-bind (m f)
   (apply #'append (mapcar f m)))
 
+(defmacro List-for (bindings &rest body)
+  (declare (indent 1))
+  `(monad-do List
+     ,@bindings
+     (return (progn ,@body))))
+
 ;; ----- ;;
 ;; tests ;;
 ;; ----- ;;
@@ -147,6 +153,12 @@
   (x (List 2 3 4))
   (y (List 5 6 7))
   (return (cons x y)))
+
+(List-for
+    ((x (List 2 3))
+     (y (List 5 6)))
+  (let ((z (+ x y)))
+    (format "%s + %s = %s" x y z)))
 
 ;; ------------ ;;
 ;; Reader monad ;;

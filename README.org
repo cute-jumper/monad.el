@@ -76,7 +76,28 @@ Note: The lexical binding must be enabled to make this work
   ;; => ((2 . 5) (2 . 6) (2 . 7) (3 . 5) (3 . 6) (3 . 7) (4 . 5) (4 . 6) (4 . 7))
   #+END_SRC
 
-  So we have =List Comprehensions= in Emacs Lisp now! Cool.
+  To make it more readable, let's define a list comprehension macro called
+  =List-for=:
+  #+BEGIN_SRC elisp
+  (defmacro List-for (bindings &rest body)
+    (declare (indent 1))
+    `(monad-do List
+       ,@bindings
+       (return (progn ,@body))))
+  #+END_SRC
+
+  Now we can write the code in a more beautiful way (Indeed, it looks a lot like
+  the =for= in Scala):
+  #+BEGIN_SRC elisp
+  (List-for
+      ((x (List 2 3))
+       (y (List 5 6)))
+    (let ((z (+ x y)))
+      (format "%s + %s = %s" x y z)))
+  ;; => ("2 + 5 = 7" "2 + 6 = 8" "3 + 5 = 8" "3 + 6 = 9")
+  #+END_SRC
+
+  Wow! We can have =List Comprehensions= in Emacs Lisp now! Cool :-)
 
 * Reader Monad
   #+BEGIN_SRC elisp
