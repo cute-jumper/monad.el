@@ -95,7 +95,7 @@
        (return -4)))
   (return (+ x y)))
 
-(Maybe-bind '(Just 2) (lambda (x) (Just (+ x 1))))
+(Maybe-bind (Just 2) (lambda (x) (Just (+ x 1))))
 
 (Maybe-join (Just (Just 4)))
 
@@ -126,22 +126,22 @@
 ;; ----- ;;
 ;; tests ;;
 ;; ----- ;;
-(defun test-pop ()
+(defun stack-pop ()
   (State (lambda (s) (list (car s) (cdr s)))))
 
-(defun test-push (a)
+(defun stack-push (a)
   (State (lambda (s) (list nil (cons a s)))))
 
 (State-run
  (monad-do State
    (x (State-get))
-   (y (test-pop))
-   (z (test-pop))
+   (y (stack-pop))
+   (z (stack-pop))
    ((if (= (length x) 3)
         (State-put '(200))
       (State-put '(100))))
-   ((test-push y))
-   (_ (test-push z))
+   ((stack-push y))
+   (_ (stack-push z))
    (return x))
  '(8 9 10))
 
