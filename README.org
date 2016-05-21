@@ -1,0 +1,55 @@
+#+TITLE: monad.el
+
+Toy implementation of monads in Emacs Lisp.
+
+Just for fun! Don't take this seriously!
+
+Note: The lexical binding must be enabled to make this work
+
+* Do Notation
+  : (monad-do type
+  :    &rest body)
+
+  The type can be one of (The list might increase over time)
+  - =Maybe=
+  - =State=
+
+  The body contains a list of sexps in the form of =(var monad)=. If you don't
+  want to bind anything, use =(_ monad)= or just =(monad)=. =if= special form is
+  also supported in the body, and =return= is also allowed.
+
+* Maybe Monad
+  #+BEGIN_SRC elisp
+  (monad-do Maybe
+    (x (Just 4))
+    (y (if (= x 4)
+           (return 5)
+         (return -4)))
+    (return (+ x y)))
+  ;; => (Just . 9)
+  #+END_SRC
+
+* State Monad
+  The following example comes from [[http://learnyouahaskell.com/][lyah]]:
+
+  #+BEGIN_SRC elisp
+  (defun stack-pop ()
+    (State (lambda (s) (list (car s) (cdr s)))))
+
+  (defun stack-push (a)
+    (State (lambda (s) (list nil (cons a s)))))
+
+  (State-run
+   (monad-do State
+     (x (State-get))
+     (y (stack-pop))
+     (z (stack-pop))
+     ((if (= (length x) 3)
+          (State-put '(200))
+        (State-put '(100))))
+     ((stack-push y))
+     (_ (stack-push z))
+     (return x))
+   '(8 9 10))
+  ;; => ((8 9 10) (9 8 200))
+  #+END_SRC
