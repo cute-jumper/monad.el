@@ -54,10 +54,10 @@ Note: The lexical binding must be enabled to make this work
     (return (cons beg end)))
   #+END_SRC
 
-  The code is much simplified since we only need to consider the successful
-  path. =Maybe<-= is a simple macro to convert the return value of its last
-  argument into a =Maybe= value: =nil= to =Nothing= and anything else is =Just
-  something=:
+  The code is much simpler and clearer than the code using nested =if= since we
+  only need to consider the successful path. =Maybe<-= is a simple macro to
+  convert the return value of its last argument into a =Maybe= value: =nil= to
+  =Nothing= and anything else is =Just something=:
   #+BEGIN_SRC elisp
   (Maybe<-
     (+ 1 2)
@@ -76,16 +76,22 @@ Note: The lexical binding must be enabled to make this work
   ;; => ((2 . 5) (2 . 6) (2 . 7) (3 . 5) (3 . 6) (3 . 7) (4 . 5) (4 . 6) (4 . 7))
   #+END_SRC
 
+  So we have =List Comprehensions= in Emacs Lisp now! Cool.
+
 * Reader Monad
   #+BEGIN_SRC elisp
   (Reader-run
    (monad-do Reader
-     (x (apply-partially '* 2))
-     (y (apply-partially '+ 10))
+     (x (Reader '* 2))
+     (y (Reader '+ 10))
      (return (+ x y)))
    3)
   ;; => 19
   #+END_SRC
+
+  =Reader= is just an alias for =apply-partially=, and =Reader-run= is an alias
+  for =funcall=. In Emacs Lisp, partial application of a function is not as
+  elegant as in Haskell. :-(
 
 * Writer Monad
   #+BEGIN_SRC elisp
@@ -98,6 +104,23 @@ Note: The lexical binding must be enabled to make this work
     (return (* x y)))
   ;; => (Writer 15 "Got number: 3" "Got number: 5")
   #+END_SRC
+
+  Right now the monoid type inside the Writer can only be
+  - string
+  - list
+  - Integer (viewed as =Sum=, not =Product=)
+  - Maybe
+
+  =cons= will be used for everything else.
+
+  More types can be supported by simply adding more branches to =Monoid-append=
+  in the source code.
+
+  Monoid examples:
+  : (Monoid-append "too" " young") ; => "too young"
+  : (Monoid-append '(5 2) '(0)) ; => (5 2 0)
+  : (Monoid-append 124 126) ; => 250
+  : (Monoid-append (Just "The quick ") (Just "brown fox")) ; => (Just . "The quick brown fox")
 
 * State Monad
   #+BEGIN_SRC elisp
@@ -121,3 +144,6 @@ Note: The lexical binding must be enabled to make this work
    '(8 9 10))
   ;; => ((8 9 10) 9 8 200)
   #+END_SRC
+
+  We have mutable states in Emacs Lisp... Anyway, state monads we show here are
+  just toys!

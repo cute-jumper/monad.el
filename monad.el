@@ -63,6 +63,20 @@
 
 (defvar Nothing 'Nothing)
 
+(defun Maybep (x)
+  (or (eq x Nothing)
+      (and
+       (consp x)
+       (eq (car x) 'Just))))
+
+(defalias 'Maybe-get 'cdr)
+
+(defun Maybe-append (x y)
+  (cond
+   ((eq x Nothing) Nothing)
+   ((eq y Nothing) x)
+   (t (Just (Monoid-append (Maybe-get x) (Maybe-get y))))))
+
 (defalias 'Maybe-return 'Just)
 
 (defun Maybe-bind (m f)
@@ -138,6 +152,8 @@
 ;; Reader monad ;;
 ;; ------------ ;;
 
+(defalias 'Reader 'apply-partially)
+
 (defalias 'Reader-run 'funcall)
 
 (defun Reader-return (x)
@@ -152,8 +168,8 @@
 
 (Reader-run
  (monad-do Reader
-   (x (apply-partially '* 2))
-   (y (apply-partially '+ 10))
+   (x (Reader '* 2))
+   (y (Reader '+ 10))
    (return (+ x y)))
  3)
 
@@ -173,7 +189,11 @@
 (defun Monoid-append (x y)
   (cond
    ((stringp x) (concat x y))
-   ((listp x) (append x y))))
+   ;; FIXME: must come before `listp'
+   ((Maybep x) (Maybe-append x y))
+   ((listp x) (append x y))
+   ((integerp x) (+ x y))
+   (t (cons x y))))
 
 (defun Writer-bind (m f)
   (let* ((res1 (Writer-run m))
