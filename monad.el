@@ -26,6 +26,33 @@
 
 (require 'cl-lib)
 
+(defmacro monad-dispatch (suffix type)
+  `(intern (format "%s-%s" ,type ,suffix)))
+
+(defun monad-normalize-return (sexp return-func)
+  (if (and
+       (consp sexp)
+       (eq (car sexp) 'return))
+      (setq sexp `(funcall ',return-func ,@(cdr sexp)))
+    sexp))
+
+(defmacro monad-do (type &rest body)
+  (declare (indent 1))
+  (let* ((reverse-body (nreverse body))
+         (return-func  (monad-dispatch 'return type))
+         (bind-func (monad-dispatch 'bind type))
+         (macro-body (monad-normalize-return
+                      (pop reverse-body) return-func))
+         curr-sexp)
+    (while (setq curr-sexp (pop reverse-body))
+      (when (eq (length curr-sexp) 1)
+        (setq curr-sexp (cons '_ curr-sexp)))
+      (setq macro-body
+            `(funcall ',bind-func
+                      ,(monad-normalize-return (cadr curr-sexp) return-func)
+                      (lambda (,(car curr-sexp)) ,macro-body))))
+    macro-body))
+
 ;; ----------- ;;
 ;; Maybe monad ;;
 ;; ----------- ;;
@@ -33,49 +60,73 @@
 
 (defvar Nothing '(Nothing))
 
-(defalias 'maybe-return 'Just)
+(defalias 'Maybe-return 'Just)
 
-(defun maybe-bind (m f)
+(defun Maybe-bind (m f)
   (pcase m
     (`(Just ,x) (funcall f x))
     (_ Nothing)))
 
-(defun maybe-then (m1 m2)
-  (maybe-bind m1 (lambda (_) m2)))
+(defun Maybe-then (m1 m2)
+  (Maybe-bind m1 (lambda (_) m2)))
 
-(defun maybe-join (m)
-  (maybe-bind m 'identity))
-
-(maybe-join (Just (Just 4)))
-
-(defmacro monad-dispatch (suffix type &rest args)
-  (declare (indent 2))
-  (let ((func-name (intern (format "%s-%s" type suffix))))
-    `(,func-name ,@args)))
-
-(defmacro monad-do (type &rest body)
-  (declare (indent 1))
-  (let* ((reverse-body (nreverse body))
-         (macro-body `(monad-dispatch return ,type
-                        ,(pop reverse-body)))
-         curr-sexp)
-    (while (setq curr-sexp (pop reverse-body))
-      (setq macro-body
-            `(monad-dispatch bind ,type
-               ,@(cdr curr-sexp)
-               (lambda (,(car curr-sexp)) ,macro-body))))
-    macro-body))
+(defun Maybe-join (m)
+  (Maybe-bind m 'identity))
 
 ;; ----- ;;
 ;; tests ;;
 ;; ----- ;;
-(monad-do maybe
+(monad-do Maybe
   (x (Just 3))
   (y (Just 4))
-  (_ Nothing)
-  (+ x y))
+  ((return 10))
+  (return (+ x y)))
 
-(maybe-bind '(Just 2) (lambda (x) (Just (+ x 1))))
+(Maybe-bind '(Just 2) (lambda (x) (Just (+ x 1))))
+
+(Maybe-join (Just (Just 4)))
+
+;; ----------- ;;
+;; State monad ;;
+;; ----------- ;;
+
+(defun State (f)
+  (list 'State f))
+
+(defun State-run (state &rest args)
+  (apply (nth 1 state) args))
+
+(defun State-return (x)
+  (State (lambda (s) (list x s))))
+
+(defun State-bind (m f)
+  (State (lambda (s)
+           (let ((pair (State-run m s)))
+             (State-run (funcall f (car pair)) (nth 1 pair))))))
+
+(defun State-get ()
+  (State (lambda (s) (list s s))))
+
+(defun State-put (s)
+  (State (lambda (s) (list nil s))))
+
+(defun test-pop ()
+  (State (lambda (s) (list (car s) (cdr s)))))
+
+(defun test-push (a)
+  (State (lambda (s) (list nil (cons a s)))))
+
+(State-run
+ (monad-do State
+   (_ (test-push 9))
+   ((test-push 10))
+   (x (State-get))
+   ((test-pop))
+   (return x))
+ '(8))
+
+(State-run (State-bind (State (lambda (s) (list 0 (+ 10 s))))
+                       (lambda (a) (State (lambda (s) (list a (* 11 s)))))) 1)
 
 (provide 'monad)
 ;;; monad.el ends here
