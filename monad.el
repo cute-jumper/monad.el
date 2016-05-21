@@ -100,7 +100,17 @@
 ;; ---------- ;;
 ;; List monad ;;
 ;; ---------- ;;
+(defalias 'List 'list)
+
 (defalias 'List-return 'list)
+
+(defun List-bind (m f)
+  (apply #'append (mapcar f m)))
+
+(monad-do List
+  (x (List 2 3 4))
+  (y (List 5 6 7))
+  (return (cons x y)))
 
 ;; ----------- ;;
 ;; State monad ;;
