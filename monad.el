@@ -30,7 +30,7 @@
   `(intern (format "%s-%s" ,type ,suffix)))
 
 (defun monad-normalize-return (sexp return-func)
-  (if (eq (car sexp) 'if)
+  (if (and (consp sexp) (eq (car sexp) 'if))
       `(,(car sexp) ,(cadr sexp)
         ,@(mapcar
            (lambda (sexp)
@@ -93,7 +93,7 @@
   (y (if (= x 4)
          (return 5)
        (return -4)))
-  (return (+ x y)))
+  Nothing)
 
 (Maybe-bind (Just 2) (lambda (x) (Just (+ x 1))))
 

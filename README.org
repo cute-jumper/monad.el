@@ -1,8 +1,8 @@
 #+TITLE: monad.el
 
-Toy implementation of monads in Emacs Lisp.
+(WIP) Toy implementation of monads in Emacs Lisp.
 
-Just for fun! Don't take this seriously!
+*Just for fun! Don't take this seriously!*
 
 Note: The lexical binding must be enabled to make this work
 
@@ -14,9 +14,12 @@ Note: The lexical binding must be enabled to make this work
   - =Maybe=
   - =State=
 
-  The body contains a list of sexps in the form of =(var monad)=. If you don't
-  want to bind anything, use =(_ monad)= or just =(monad)=. =if= special form is
-  also supported in the body, and =return= is also allowed.
+  The body contains a list of sexps in the form of =(var monad)= except for the
+  last expression. If you don't want to bind anything, use =(_ monad)= or just
+  =(monad)=. Since that since =do= notation doesn't allow you to bind any
+  variable in the last expression, so the last sexp is only =monad=, not
+  =(monad)=. =if= special form is also supported in the body, and =return= is
+  also allowed.
 
 * Maybe Monad
   #+BEGIN_SRC elisp
