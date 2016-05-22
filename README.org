@@ -7,8 +7,10 @@
 Note: The lexical binding must be enabled to make this work
 
 * Do Notation
-  : (monad-do type
-  :    &rest body)
+  #+BEGIN_SRC elisp
+  (monad-do type
+       &rest body)
+  #+END_SRC
 
   Currently, the type can be one of
   - =Maybe=
@@ -27,14 +29,20 @@ Note: The lexical binding must be enabled to make this work
 
 * Maybe Monad
   To create a Maybe monad, use =Just= or =Nothing=:
-  : (Just 4) ; => (Just . 4)
-  : Nothing ; => Nothing
+  #+BEGIN_SRC elisp
+  (Just 4) ; => (Just . 4)
+  Nothing ; => Nothing
+  #+END_SRC
 
   To see if something is a Maybe monad:
-  : (Maybep (Just 4)) ; => t
+  #+BEGIN_SRC elisp
+  (Maybep (Just 4)) ; => t
+  #+END_SRC
 
   To get the value from =Just=:
-  : (Maybe-get (Just "foo")) ; => "foo"
+  #+BEGIN_SRC elisp
+  (Maybe-get (Just "foo")) ; => "foo"
+  #+END_SRC
 
   Use =do= notation:
   #+BEGIN_SRC elisp
@@ -80,7 +88,9 @@ Note: The lexical binding must be enabled to make this work
 
 * List Monad
   To create a List monad, use =List=:
-  : (List 2 3) ; => (2 3)
+  #+BEGIN_SRC elisp
+  (List 2 3) ; => (2 3)
+  #+END_SRC
 
   =List= is actually an alias for =list=.
 
@@ -118,10 +128,14 @@ Note: The lexical binding must be enabled to make this work
 
 * Reader Monad
   To create a Reader monad:
-  : (Reader '+ 1) ; => (closure (t) (&rest args) (apply '* '1 args))
+  #+BEGIN_SRC elisp
+  (Reader '+ 1) ; => (closure (t) (&rest args) (apply '* '1 args))
+  #+END_SRC
 
   To run a Reader monad:
-  : (Reader-run (Reader '+ 1) 1) ; => 2
+  #+BEGIN_SRC elisp
+  (Reader-run (Reader '+ 1) 1) ; => 2
+  #+END_SRC
 
   =Reader= is just an alias for =apply-partially=, and =Reader-run= is an alias
   for =funcall=. In Emacs Lisp, partial application of a function is not as
@@ -140,10 +154,14 @@ Note: The lexical binding must be enabled to make this work
 
 * Writer Monad
   To create a writer monad:
-  : (Writer 888 "Lucky") ; => (Writer 888 . "Lucky")
+  #+BEGIN_SRC elisp
+  (Writer 888 "Lucky") ; => (Writer 888 . "Lucky")
+  #+END_SRC
 
   To run a Writer monad:
-  : (Writer-run (Writer 888 "Lucky")) ; => (888 . "Lucky")
+  #+BEGIN_SRC elisp
+  (Writer-run (Writer 888 "Lucky")) ; => (888 . "Lucky")
+  #+END_SRC
 
   Use =do= notation:
   #+BEGIN_SRC elisp
@@ -169,21 +187,29 @@ Note: The lexical binding must be enabled to make this work
   in the source code.
 
   Monoid examples:
-  : (Monoid-append "too" " young") ; => "too young"
-  : (Monoid-append '(5 2) '(0)) ; => (5 2 0)
-  : (Monoid-append 124 126) ; => 250
-  : (Monoid-append (Just "The quick ") (Just "brown fox")) ; => (Just . "The quick brown fox")
+  #+BEGIN_SRC elisp
+  (Monoid-append "too" " young") ; => "too young"
+  (Monoid-append '(5 2) '(0)) ; => (5 2 0)
+  (Monoid-append 124 126) ; => 250
+  (Monoid-append (Just "The quick ") (Just "brown fox")) ; => (Just . "The quick brown fox")
+  #+END_SRC
 
 * State Monad
   To create a State monad:
-  : (State (lambda (x) (cons 0 (1+ x)))) ; => (State lambda (x) (cons 0 (1+ x)))
+  #+BEGIN_SRC elisp
+  (State (lambda (x) (cons 0 (1+ x)))) ; => (State lambda (x) (cons 0 (1+ x)))
+  #+END_SRC
 
   To run a State monad:
-  : (State-run (State (lambda (x) (cons 0 (1+ x)))) 5) ; => (0 . 6)
+  #+BEGIN_SRC elisp
+  (State-run (State (lambda (x) (cons 0 (1+ x)))) 5) ; => (0 . 6)
+  #+END_SRC
 
   Use =State-get= and =State-put= to perform =get= and =put=:
-  : (State-run (State-get) 1) ; => (1 . 1)
-  : (State-run (State-put 2) 1) ; => (nil . 2)
+  #+BEGIN_SRC elisp
+  (State-run (State-get) 1) ; => (1 . 1)
+  (State-run (State-put 2) 1) ; => (nil . 2)
+  #+END_SRC
 
   Use =do= notation:
   #+BEGIN_SRC elisp
