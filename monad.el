@@ -29,32 +29,42 @@
 (defmacro monad-dispatch (suffix type)
   `(intern (format "%s-%s" ,type ,suffix)))
 
-(defun monad-normalize-return (sexp return-func)
-  (if (consp sexp)
-      (if (eq (car sexp) 'return)
-          `(funcall ',return-func ,@(cdr sexp))
-        (mapcar
-         (lambda (s)
-           (monad-normalize-return s return-func))
-         sexp))
-    sexp))
+(defun monad-normalize (type sexp)
+  (let ((return-func (monad-dispatch 'return type)))
+    (if (consp sexp)
+        (cond
+         ((eq (car sexp) 'return) `(funcall ',return-func ,@(cdr sexp)))
+         ((eq (car sexp) 'guard) `(monad+-guard ',type ,@(cdr sexp)))
+         (t (mapcar
+             (lambda (s)
+               (monad-normalize type s))
+             sexp)))
+      sexp)))
 
 (defmacro monad-do (type &rest body)
   (declare (indent 1))
   (let* ((reverse-body (nreverse body))
          (return-func  (monad-dispatch 'return type))
          (bind-func (monad-dispatch 'bind type))
-         (macro-body (monad-normalize-return
-                      (pop reverse-body) return-func))
+         (macro-body (monad-normalize type
+                                      (pop reverse-body)))
          curr-sexp)
     (while (setq curr-sexp (pop reverse-body))
       (when (eq (length curr-sexp) 1)
         (setq curr-sexp (cons '_ curr-sexp)))
       (setq macro-body
             `(funcall ',bind-func
-                      ,(monad-normalize-return (cadr curr-sexp) return-func)
+                      ,(monad-normalize type (cadr curr-sexp))
                       (lambda (,(car curr-sexp)) ,macro-body))))
     macro-body))
+
+
+(defun monad+-guard (type b)
+  (let ((return-func (monad-dispatch 'return type))
+        (zero (symbol-value (monad-dispatch 'zero type))))
+    (if b
+        (funcall return-func nil)
+      zero)))
 
 ;; ----------- ;;
 ;; Maybe monad ;;
@@ -62,6 +72,8 @@
 (defun Just (x) (cons 'Just x))
 
 (defvar Nothing 'Nothing)
+
+(defvar Maybe-zero Nothing)
 
 (defun Maybep (x)
   (or (eq x Nothing)
@@ -104,6 +116,7 @@
   (x (Just 3))
   (y (Just 4))
   ((return 10))
+  ((guard (< y 2)))
   (return (+ x y)))
 
 (monad-do Maybe
@@ -134,6 +147,8 @@
 ;; ---------- ;;
 (defalias 'List 'list)
 
+(defvar List-zero nil)
+
 (defalias 'List-return 'list)
 
 (defun List-bind (m f)
@@ -154,9 +169,16 @@
   (y (List 5 6 7))
   (return (cons x y)))
 
+(monad-do List
+  (x (List 1 2))
+  (y (List 2 3))
+  ((guard (> (* x y) 2)))
+  (return (+ x y)))
+
 (List-for
     ((x (List 2 3))
-     (y (List 5 6)))
+     (y (List 5 6))
+     ((guard (> (* x y) 14))))
   (let ((z (+ x y)))
     (format "%s + %s = %s" x y z)))
 

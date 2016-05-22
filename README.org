@@ -23,7 +23,9 @@ Note: The lexical binding must be enabled to make this work
   last expression. If you don't want to bind anything, use =(_ monad)= or just
   =(monad)=. Since =do= notation doesn't allow you to bind any variable in the
   last expression, so the last expression is only =monad=, not =(monad)=. Whthin
-  the body, =return= is also allowed.
+  the body, =return= is also allowed. If the monad belongs to =MonadPlus=, you
+  can also use =guard= within the body. Currently, =guard= can only be used for
+  Maybe and List monads.
 
   Some of the following code are based on examples of [[http://learnyouahaskell.com/]].
 
@@ -55,11 +57,21 @@ Note: The lexical binding must be enabled to make this work
   ;; => (Just . 9)
   #+END_SRC
 
+  Use =guard= within =do= notation:
+  #+BEGIN_SRC elisp
+  (monad-do Maybe
+    (x (Just 4))
+    (y (Just 5))
+    ((guard (> x y)))
+    (return (+ x y)))
+  ;; => Nothing
+  #+END_SRC
+
   How can this be useful in real world scenarios? For example, in [[https://github.com/cute-jumper/org2elcomment][org2elcomment]],
   we need to search inside an Emacs Lisp source code file to find the two lines:
   =;;; Commentary:= and =;;; Code:=, and insert the comment between these two
   lines. If one of the searches fails, the whole process fails. Here is how to
-  use =Maybe= monad in this scenario:
+  use Maybe monad in this scenario:
   #+BEGIN_SRC elisp
   (monad-do Maybe
     (beg (Maybe<-
@@ -113,8 +125,7 @@ Note: The lexical binding must be enabled to make this work
        (return (progn ,@body))))
   #+END_SRC
 
-  Now we can write the code in a more beautiful way (Indeed, it looks a lot like
-  the =for= in Scala):
+  Now we can write the code in a more beautiful way:
   #+BEGIN_SRC elisp
   (List-for
       ((x (List 2 3))
@@ -122,6 +133,22 @@ Note: The lexical binding must be enabled to make this work
     (let ((z (+ x y)))
       (format "%s + %s = %s" x y z)))
   ;; => ("2 + 5 = 7" "2 + 6 = 8" "3 + 5 = 8" "3 + 6 = 9")
+  #+END_SRC
+
+  The above code looks a lot like the =for= expression in Scala. In fact, in
+  Scala =for= expressions are translated using =flatMap= (not precisely, the
+  last binding expression uses =map= instead of =flatMap=), which is the Scala's
+  name for =bind= in List monads.
+
+  You can also use =guard= for List monads:
+  #+BEGIN_SRC elisp
+  (List-for
+      ((x (List 2 3))
+       (y (List 5 6))
+       ((guard (> (* x y) 12))))
+    (let ((z (+ x y)))
+      (format "%s + %s = %s" x y z)))
+  ;; => ("3 + 5 = 8" "3 + 6 = 9")
   #+END_SRC
 
   Wow! We can have =List Comprehensions= in Emacs Lisp now! Cool :-)
